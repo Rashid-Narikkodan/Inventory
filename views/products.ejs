@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Products</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
+      <h1 class="text-2xl font-semibold mb-4 text-gray-800">
+        Product List
+      </h1>
+
+      <!-- Input Section -->
+      <div class="flex gap-2 mb-4">
+        <input
+          id="nameInput"
+          type="text"
+          placeholder="Product name"
+          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+        />
+
+        <input
+          id="priceInput"
+          type="number"
+          placeholder="Price"
+          class="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+        />
+
+        <button
+          id="add"
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+        >
+          Add
+        </button>
+      </div>
+
+      <!-- Product List -->
+      <ul id="list" class="space-y-2 text-sm text-gray-700">
+        <% products.forEach(product => { %>
+          <li class="flex justify-between bg-gray-50 px-3 py-2 rounded-md border">
+            <span class="font-medium"><%= product.name %></span>
+            <span class="text-gray-600">₹ <%= product.price %></span>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <script>
+      const nameInput = document.getElementById("nameInput");
+      const priceInput = document.getElementById("priceInput");
+      const addBtn = document.getElementById("add");
+      const list = document.getElementById("list");
+
+      addBtn.addEventListener("click", async () => {
+        const name = nameInput.value.trim();
+        const price = Number(priceInput.value);
+
+        // Basic validation
+        if (!name || isNaN(price) || price <= 0) return;
+
+        try {
+          const res = await fetch("/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, price }),
+          });
+
+          const data = await res.json();
+
+          if (data.status) {
+            const li = document.createElement("li");
+            li.className =
+              "flex justify-between bg-gray-50 px-3 py-2 rounded-md border";
+
+            li.innerHTML = `
+              <span class="font-medium">${data.product.name}</span>
+              <span class="text-gray-600">₹ ${data.product.price}</span>
+            `;
+
+            list.appendChild(li);
+            nameInput.value = "";
+            priceInput.value = "";
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    </script>
+  </body>
+</html>

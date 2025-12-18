@@ -1,4 +1,6 @@
 import express from "express";
+import path from "path";
+import productRoutes from './routes/inventory.routes'
 
 export const app = express();
 
@@ -6,7 +8,10 @@ export const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../views'));
+
 /* Temporary test route */
-app.get("/", (req, res) => {
-  res.send("Inventory API running");
-});
+app.use('/', productRoutes)
+
+
