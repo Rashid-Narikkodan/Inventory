@@ -40,9 +40,17 @@
       <!-- Product List -->
       <ul id="list" class="space-y-2 text-sm text-gray-700">
         <% products.forEach(product => { %>
-          <li class="flex justify-between bg-gray-50 px-3 py-2 rounded-md border">
-            <span class="font-medium"><%= product.name %></span>
-            <span class="text-gray-600">₹ <%= product.price %></span>
+          <li class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-md border" data-id="<%= product.id %>">
+            <div class="flex-1 flex justify-between items-center">
+              <span class="font-medium"><%= product.name %></span>
+              <span class="text-gray-600">₹ <%= product.price %></span>
+            </div>
+            <button
+              class="delete-btn ml-3 bg-red-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-red-600 transition"
+              data-id="<%= product.id %>"
+            >
+              Delete
+            </button>
           </li>
         <% }) %>
       </ul>
@@ -53,6 +61,39 @@
       const priceInput = document.getElementById("priceInput");
       const addBtn = document.getElementById("add");
       const list = document.getElementById("list");
+
+      // Delete functionality
+      const handleDelete = async (e) => {
+        const deleteBtn = e.target;
+        const productId = deleteBtn.getAttribute("data-id");
+        const listItem = deleteBtn.closest("li");
+
+        if (!productId || !listItem) return;
+
+        try {
+          const res = await fetch(`/`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body:JSON.stringify({id:productId})
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            listItem.remove();
+          } else {
+            alert(data.message || "Failed to delete product");
+          }
+        } catch (err) {
+          console.error("Delete error:", err);
+          alert("Error deleting product");
+        }
+      };
+
+      // Attach delete event listeners to all existing delete buttons
+      document.querySelectorAll(".delete-btn").forEach((btn) => {
+        btn.addEventListener("click", handleDelete);
+      });
 
       addBtn.addEventListener("click", async () => {
         const name = nameInput.value.trim();
@@ -70,19 +111,35 @@
 
           const data = await res.json();
 
-          if (data.status) {
+          if (data.success && data.data) {
+            const product = data.data;
             const li = document.createElement("li");
             li.className =
-              "flex justify-between bg-gray-50 px-3 py-2 rounded-md border";
+              "flex justify-between items-center bg-gray-50 px-3 py-2 rounded-md border";
+            li.setAttribute("data-id", product.id);
 
             li.innerHTML = `
-              <span class="font-medium">${data.product.name}</span>
-              <span class="text-gray-600">₹ ${data.product.price}</span>
+              <div class="flex-1 flex justify-between items-center">
+                <span class="font-medium">${product.name}</span>
+                <span class="text-gray-600">₹ ${product.price}</span>
+              </div>
+              <button
+                class="delete-btn ml-3 bg-red-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-red-600 transition"
+                data-id="${product.id}"
+              >
+                Delete
+              </button>
             `;
 
             list.appendChild(li);
             nameInput.value = "";
             priceInput.value = "";
+
+            // Attach delete event listener to the new button
+            const deleteBtn = li.querySelector(".delete-btn");
+            if (deleteBtn) {
+              deleteBtn.addEventListener("click", handleDelete);
+            }
           }
         } catch (err) {
           console.error(err);
